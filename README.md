@@ -537,6 +537,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 [![GitHub Stars](https://img.shields.io/github/stars/telepath/telepath?style=social)](https://github.com/RoryDotGG/telepath)
 
-[📖 Documentation](https://docs.telepath.ai) • [🐛 Report Bug](https://github.com/telepath/telepath/issues) • [💡 Request Feature](https://github.com/telepath/telepath/discussions)
+[🐛 Report Bug](https://github.com/telepath/telepath/issues) • [💡 Request Feature](https://github.com/telepath/telepath/discussions)
 
-</div>
+</div>   
