@@ -50,6 +50,7 @@ Telepath is an intelligent Telegram bot that creates memorable, AI-generated sho
 - **Error Recovery**: Comprehensive error handling with helpful messages
 
 ### 🛡️ **Security & Reliability**
+- **Access Control**: Allow list authentication for authorized users only
 - **Input Validation**: Secure URL processing and validation
 - **Session Management**: Secure user session handling
 - **Error Handling**: Graceful failure handling with user-friendly messages
@@ -85,6 +86,7 @@ Telepath is an intelligent Telegram bot that creates memorable, AI-generated sho
    DUB_API_KEY=your_dub_api_key_here
    GEMINI_API_KEY=your_gemini_api_key_here
    NODE_ENV=development
+   ALLOWED_USER_IDS=your_telegram_user_id_here
    ```
 
 3. **Database Setup**
@@ -173,6 +175,7 @@ src/
 ├── services/
 │   ├── aiService.ts          # Google Gemini integration
 │   ├── dubService.ts         # Dub.sh API integration
+│   ├── authService.ts        # User authentication and access control
 │   ├── userPreferencesService.ts # User settings management
 │   └── linkManagementService.ts # Link database operations
 ├── lib/
@@ -245,6 +248,7 @@ model UserLink {
 | `DUB_API_KEY` | ✅ | Dub.sh API key from dashboard | `dub_xyz123...` |
 | `GEMINI_API_KEY` | ✅ | Google Gemini API key | `AIza...` |
 | `NODE_ENV` | ❌ | Environment mode | `development` |
+| `ALLOWED_USER_IDS` | ❌ | Comma-separated list of authorized user IDs | `123456789,987654321` |
 
 ### 🔗 Service Setup
 
@@ -266,6 +270,22 @@ model UserLink {
 2. Sign in with Google account
 3. Create new API key
 4. Enable Gemini API access
+
+#### Authentication Setup (Optional)
+1. **Find your Telegram User ID**:
+   - Message [@userinfobot](https://t.me/userinfobot) on Telegram
+   - Or check bot logs when you first message your bot
+   - Your user ID will be displayed as a number (e.g., `123456789`)
+
+2. **Configure Access Control**:
+   - Add `ALLOWED_USER_IDS=123456789,987654321` to your `.env` file
+   - Include comma-separated user IDs for multiple users
+   - Leave empty or omit to allow all users (default behavior)
+
+3. **Test Access**:
+   - Authorized users can use the bot normally
+   - Unauthorized users receive a clear denial message
+   - Check console logs for access attempts
 
 ## 🚀 Deployment
 
@@ -390,11 +410,13 @@ The bot provides comprehensive analytics through Dub.sh:
 
 ### 🛡️ Security Features
 
+- **Access Control**: Allow list authentication for authorized users only
 - **Input Sanitization**: All URLs validated and cleaned
 - **SQL Injection Protection**: Prisma ORM with prepared statements
 - **Rate Limiting**: Built-in protection against abuse
 - **Error Message Sanitization**: No sensitive data in error messages
 - **Secure Session Storage**: In-memory session management
+- **Audit Logging**: Track unauthorized access attempts
 
 ## 🤝 Contributing
 
@@ -462,6 +484,7 @@ pnpm dev
 - ✅ Verify bot is started with `/start`
 - ✅ Ensure API keys are valid
 - ✅ Check network connectivity
+- ✅ Verify user ID is in `ALLOWED_USER_IDS` (if configured)
 
 #### AI Suggestions Not Working
 - ✅ Verify Gemini API key

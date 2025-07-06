@@ -7,6 +7,7 @@ export const config = {
   dubApiKey: process.env.DUB_API_KEY || '',
   geminiApiKey: process.env.GEMINI_API_KEY || '',
   nodeEnv: process.env.NODE_ENV || 'development',
+  allowedUserIds: process.env.ALLOWED_USER_IDS || '',
 } as const;
 
 export function validateConfig(): void {

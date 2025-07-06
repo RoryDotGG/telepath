@@ -5,6 +5,7 @@ import { LinkHandler } from './handlers/linkHandler';
 import { SetupHandler } from './handlers/setupHandler';
 import { LinkManagementHandler } from './handlers/linkManagementHandler';
 import { LinkManagementService } from './services/linkManagementService';
+import { AuthService } from './services/authService';
 import { UserSession } from './types';
 
 async function startBot() {
@@ -15,10 +16,28 @@ async function startBot() {
     // Initialize bot and shared services
     const bot = new Telegraf(config.botToken);
     const userSessions = new Map<number, UserSession>();
+    const authService = new AuthService();
     const linkManagementService = new LinkManagementService();
     const setupHandler = new SetupHandler(userSessions);
     const linkHandler = new LinkHandler(userSessions, setupHandler.getUserPreferencesService(), linkManagementService);
     const linkManagementHandler = new LinkManagementHandler(linkManagementService, userSessions);
+
+    // Authentication middleware
+    bot.use(async (ctx, next) => {
+      const userId = ctx.from?.id;
+      
+      if (!userId) {
+        return;
+      }
+
+      if (!authService.isUserAllowed(userId)) {
+        console.log(`🚫 Unauthorized access attempt from user ${userId}`);
+        await ctx.reply(authService.getUnauthorizedMessage(), { parse_mode: 'Markdown' });
+        return;
+      }
+
+      await next();
+    });
 
     // Middleware for logging
     bot.use(async (ctx, next) => {
@@ -102,7 +121,6 @@ Need more help? Just send me a URL and try it out! 🚀`;
       const aboutMessage = `ℹ️ **About Telepath - AI Short Links**
 
 **Version:** 1.0.0
-**Bot Name:** @telepath_link_bot
 
 **🚀 What is Telepath?**
 Telepath is an AI-powered Telegram bot that creates intelligent short links. Instead of random characters like "bit.ly/x7k2m", you get meaningful, memorable links like "dub.sh/ai-tutorial" or "mysite.com/product-launch".
@@ -288,34 +306,49 @@ What would you like to change?`;
       }
     });
 
-    // Configure bot settings
-    try {
-      // Set bot commands menu
-      await bot.telegram.setMyCommands([
-        { command: 'start', description: 'Start or restart the bot' },
-        { command: 'help', description: 'Show help and usage instructions' },
-        { command: 'about', description: 'About Telepath bot' },
-        { command: 'links', description: 'View and manage your short links' },
-        { command: 'settings', description: 'Configure your preferences' }
-      ]);
+    // Configure bot settings with retry logic
+    const configureBotSettings = async (retryCount = 0) => {
+      try {
+        // Set bot commands menu
+        await bot.telegram.setMyCommands([
+          { command: 'start', description: 'Start or restart the bot' },
+          { command: 'help', description: 'Show help and usage instructions' },
+          { command: 'about', description: 'About Telepath bot' },
+          { command: 'links', description: 'View and manage your short links' },
+          { command: 'settings', description: 'Configure your preferences' }
+        ]);
 
-      // Set bot name and description
-      await bot.telegram.setMyName('Telepath - AI Short Links');
-      await bot.telegram.setMyDescription('🚀 Telepath creates intelligent short links using AI! Simply send any URL and get a meaningful, memorable short link powered by Google Gemini and Dub.sh.\n\n✨ Features:\n• AI-powered slug generation\n• Custom domain support\n• Link analytics & management\n• Personalized preferences\n\nJust send me a URL to get started!');
-      await bot.telegram.setMyShortDescription('AI-powered short link generator with intelligent slug creation');
+        // Set bot name and description (these are often rate-limited)
+        await bot.telegram.setMyName('Telepath - AI Short Links');
+        await bot.telegram.setMyDescription('🚀 Telepath creates intelligent short links using AI! Simply send any URL and get a meaningful, memorable short link powered by Google Gemini and Dub.sh.\n\n✨ Features:\n• AI-powered slug generation\n• Custom domain support\n• Link analytics & management\n• Personalized preferences\n\nJust send me a URL to get started!');
+        await bot.telegram.setMyShortDescription('AI-powered short link generator with intelligent slug creation');
 
-      // Set chat menu button
-      await bot.telegram.setChatMenuButton({
-        menuButton: {
-          type: 'commands'
+        // Set chat menu button
+        await bot.telegram.setChatMenuButton({
+          menuButton: {
+            type: 'commands'
+          }
+        });
+
+        console.log('✅ Bot configuration set successfully');
+      } catch (error: any) {
+        if (error.response?.error_code === 429) {
+          const retryAfter = error.response.parameters?.retry_after || 60;
+          console.warn(`⚠️ Rate limited. Retrying bot configuration in ${retryAfter} seconds...`);
+          
+          if (retryCount < 3) {
+            setTimeout(() => configureBotSettings(retryCount + 1), retryAfter * 1000);
+          } else {
+            console.warn('⚠️ Max retries reached. Bot configuration will be skipped.');
+          }
+        } else {
+          console.warn('⚠️ Warning: Could not set bot configuration:', error);
         }
-      });
+      }
+    };
 
-      console.log('✅ Bot configuration set successfully');
-    } catch (error) {
-      console.warn('⚠️ Warning: Could not set bot configuration:', error);
-      // Continue anyway as these are not critical for bot operation
-    }
+    // Start bot configuration (non-blocking)
+    configureBotSettings();
 
     // Launch bot
     await bot.launch();
