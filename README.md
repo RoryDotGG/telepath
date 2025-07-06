@@ -535,9 +535,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 **Built with ❤️ using TypeScript, Telegraf, Dub.sh, and Google Gemini AI**
 
-[![GitHub Stars](https://img.shields.io/github/stars/telepath/telepath?style=social)](https://github.com/telepath/telepath)
-[![Follow on Twitter](https://img.shields.io/twitter/follow/telepathbot?style=social)](https://twitter.com/telepathbot)
+[![GitHub Stars](https://img.shields.io/github/stars/telepath/telepath?style=social)](https://github.com/RoryDotGG/telepath)
 
-[🤖 Try the Bot](https://t.me/telepath_link_bot) • [📖 Documentation](https://docs.telepath.ai) • [🐛 Report Bug](https://github.com/telepath/telepath/issues) • [💡 Request Feature](https://github.com/telepath/telepath/discussions)
+[📖 Documentation](https://docs.telepath.ai) • [🐛 Report Bug](https://github.com/telepath/telepath/issues) • [💡 Request Feature](https://github.com/telepath/telepath/discussions)
 
 </div>
