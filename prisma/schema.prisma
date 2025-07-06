@@ -1,0 +1,46 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model UserPreferences {
+  id                  Int      @id @default(autoincrement())
+  userId              Int      @unique
+  defaultDomain       String?
+  preferredSlugStyle  String   @default("intelligent")
+  autoConfirm         Boolean  @default(false)
+  showReasoning       Boolean  @default(true)
+  setupCompleted      Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  links UserLink[]
+}
+
+model UserLink {
+  id          String    @id @default(cuid())
+  userId      Int
+  domain      String
+  key         String
+  url         String
+  shortLink   String
+  title       String?
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime? @updatedAt
+  clicks      Int       @default(0)
+  
+  user UserPreferences @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  
+  @@unique([domain, key])
+}

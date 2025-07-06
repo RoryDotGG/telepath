@@ -1,0 +1,41 @@
+{
+  "name": "telepath-bot",
+  "version": "1.0.0",
+  "description": "AI-powered Telegram bot for creating intelligent short links using Google Gemini and Dub.sh",
+  "main": "dist/bot.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "nodemon --exec ts-node src/bot.ts",
+    "start": "node dist/bot.js",
+    "setup": "pnpm build && node scripts/setup-bot.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "short-links",
+    "ai",
+    "gemini",
+    "dub",
+    "url-shortener",
+    "intelligent",
+    "link-management"
+  ],
+  "author": "RoryDotGG",
+  "license": "MIT",
+  "packageManager": "pnpm@10.12.4",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@prisma/client": "^6.11.1",
+    "dotenv": "^17.0.1",
+    "dub": "^0.63.7",
+    "prisma": "^6.11.1",
+    "telegraf": "^4.16.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.10",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
