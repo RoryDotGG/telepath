@@ -100,6 +100,7 @@ pids
 
 # DynamoDB Local files
 .dynamodb/
+prisma/dev.db
 
 # TernJS port file
 .tern-port
