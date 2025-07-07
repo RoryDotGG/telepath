@@ -6,6 +6,7 @@ import { SetupHandler } from './handlers/setupHandler';
 import { LinkManagementHandler } from './handlers/linkManagementHandler';
 import { LinkManagementService } from './services/linkManagementService';
 import { AuthService } from './services/authService';
+import { BotConfigService } from './services/botConfigService';
 import { UserSession } from './types';
 
 async function startBot() {
@@ -17,6 +18,7 @@ async function startBot() {
     const bot = new Telegraf(config.botToken);
     const userSessions = new Map<number, UserSession>();
     const authService = new AuthService();
+    const botConfigService = new BotConfigService();
     const linkManagementService = new LinkManagementService();
     const setupHandler = new SetupHandler(userSessions);
     const linkHandler = new LinkHandler(userSessions, setupHandler.getUserPreferencesService(), linkManagementService);
@@ -306,43 +308,70 @@ What would you like to change?`;
       }
     });
 
-    // Configure bot settings with retry logic
-    const configureBotSettings = async (retryCount = 0) => {
+    // Configure bot settings only if not already configured
+    const configureBotSettings = async () => {
       try {
-        // Set bot commands menu
-        await bot.telegram.setMyCommands([
-          { command: 'start', description: 'Start or restart the bot' },
-          { command: 'help', description: 'Show help and usage instructions' },
-          { command: 'about', description: 'About Telepath bot' },
-          { command: 'links', description: 'View and manage your short links' },
-          { command: 'settings', description: 'Configure your preferences' }
-        ]);
+        // Check if configuration is already completed
+        const isConfigured = await botConfigService.isConfigurationCompleted();
+        
+        if (isConfigured) {
+          console.log('✅ Bot configuration already completed, skipping...');
+          return;
+        }
 
-        // Set bot name and description (these are often rate-limited)
-        await bot.telegram.setMyName('Telepath - AI Short Links');
-        await bot.telegram.setMyDescription('🚀 Telepath creates intelligent short links using AI! Simply send any URL and get a meaningful, memorable short link powered by Google Gemini and Dub.sh.\n\n✨ Features:\n• AI-powered slug generation\n• Custom domain support\n• Link analytics & management\n• Personalized preferences\n\nJust send me a URL to get started!');
-        await bot.telegram.setMyShortDescription('AI-powered short link generator with intelligent slug creation');
+        console.log('🔧 Configuring bot settings...');
+
+        // Set bot commands menu
+        if (!(await botConfigService.isComponentConfigured('COMMANDS_SET'))) {
+          await bot.telegram.setMyCommands([
+            { command: 'start', description: 'Start or restart the bot' },
+            { command: 'help', description: 'Show help and usage instructions' },
+            { command: 'about', description: 'About Telepath bot' },
+            { command: 'links', description: 'View and manage your short links' },
+            { command: 'settings', description: 'Configure your preferences' }
+          ]);
+          await botConfigService.markComponentConfigured('COMMANDS_SET');
+        }
+
+        // Set bot name
+        if (!(await botConfigService.isComponentConfigured('NAME_SET'))) {
+          await bot.telegram.setMyName('Telepath - AI Short Links');
+          await botConfigService.markComponentConfigured('NAME_SET');
+        }
+
+        // Set bot description
+        if (!(await botConfigService.isComponentConfigured('DESCRIPTION_SET'))) {
+          await bot.telegram.setMyDescription('🚀 Telepath creates intelligent short links using AI! Simply send any URL and get a meaningful, memorable short link powered by Google Gemini and Dub.sh.\n\n✨ Features:\n• AI-powered slug generation\n• Custom domain support\n• Link analytics & management\n• Personalized preferences\n\nJust send me a URL to get started!');
+          await botConfigService.markComponentConfigured('DESCRIPTION_SET');
+        }
+
+        // Set short description
+        if (!(await botConfigService.isComponentConfigured('SHORT_DESCRIPTION_SET'))) {
+          await bot.telegram.setMyShortDescription('AI-powered short link generator with intelligent slug creation');
+          await botConfigService.markComponentConfigured('SHORT_DESCRIPTION_SET');
+        }
 
         // Set chat menu button
-        await bot.telegram.setChatMenuButton({
-          menuButton: {
-            type: 'commands'
-          }
-        });
+        if (!(await botConfigService.isComponentConfigured('MENU_BUTTON_SET'))) {
+          await bot.telegram.setChatMenuButton({
+            menuButton: {
+              type: 'commands'
+            }
+          });
+          await botConfigService.markComponentConfigured('MENU_BUTTON_SET');
+        }
 
-        console.log('✅ Bot configuration set successfully');
+        // Mark full configuration as completed
+        await botConfigService.markConfigurationCompleted();
+        console.log('✅ Bot configuration completed successfully');
+
       } catch (error: any) {
         if (error.response?.error_code === 429) {
           const retryAfter = error.response.parameters?.retry_after || 60;
-          console.warn(`⚠️ Rate limited. Retrying bot configuration in ${retryAfter} seconds...`);
-          
-          if (retryCount < 3) {
-            setTimeout(() => configureBotSettings(retryCount + 1), retryAfter * 1000);
-          } else {
-            console.warn('⚠️ Max retries reached. Bot configuration will be skipped.');
-          }
+          console.warn(`⚠️ Rate limited during bot configuration. Will retry on next restart in ${retryAfter} seconds.`);
+          console.warn('⚠️ Bot will function normally, configuration will be attempted again later.');
         } else {
-          console.warn('⚠️ Warning: Could not set bot configuration:', error);
+          console.warn('⚠️ Warning: Could not complete bot configuration:', error);
         }
       }
     };

@@ -44,3 +44,11 @@ model UserLink {
   
   @@unique([domain, key])
 }
+
+model BotConfiguration {
+  id                    Int      @id @default(autoincrement())
+  key                   String   @unique
+  value                 String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
